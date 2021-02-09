@@ -1,73 +1,9 @@
-from py2neo import Graph
-import jieba
+from pyhanlp import  *
 class Untils:
-
-    ## 判断词语中属于疾病里的什么东西
-    def JudgeIll(texts):
-        type= dict()
-        check_list = []
-        deny_list=[]
-        department_list=[]
-        drug_list=[]
-        food_list=[]
-        producer_list=[]
-        symptom_list=[]
-        disease_list=[]
-
-        file = open("dict/check.txt", encoding="utf-8").readlines()
-        for f in file:
-            check_list.append(f.strip("\n"))
-
-        file = open("dict/deny.txt", encoding="utf-8").readlines()
-        for f in file:
-            deny_list.append(f.strip("\n"))
-
-        file = open("dict/department.txt", encoding="utf-8").readlines()
-        for f in file:
-            department_list.append(f.strip("\n"))
-
-        file = open("dict/disease.txt", encoding="utf-8").readlines()
-        for f in file:
-            disease_list.append(f.strip("\n"))
-
-        file = open("dict/drug.txt", encoding="utf-8").readlines()
-        for f in file:
-            drug_list.append(f.strip("\n"))
-
-        file = open("dict/food.txt", encoding="utf-8").readlines()
-        for f in file:
-            food_list.append(f.strip("\n"))
-
-        file = open("dict/producer.txt", encoding="utf-8").readlines()
-        for f in file:
-            producer_list.append(f.strip("\n"))
-
-        file = open("dict/symptom.txt", encoding="utf-8").readlines()
-        for f in file:
-            symptom_list.append(f.strip("\n"))
-
-        for text in texts:
-            if text in check_list:
-                type["check"]=text
-            if text in deny_list:
-                type["deny"]=text
-            if text in department_list:
-                type["department"] = text
-            if text in disease_list:
-                type["disease"] = text
-            if text in drug_list:
-                type["drug"]=text
-            if text in food_list:
-                type["food"] = text
-            if text in producer_list:
-                type["producer"] = text
-            if text in symptom_list:
-                type["symptom"] = text
-        return type
 
     ## 判断语句中的查询类型
     def JudgeType(text):
-        symptom_qwds = ['症状', '表征', '现象', '症候', '表现',"引起","会引起"]
+        symptom_qwds = ['症状', '表征', '现象', '症候', '表现',"引起","会引起","会"]
         easyget_qwds = ['易感人群', '容易感染', '易发人群', '什么人', '哪些人', '感染', '染上', '得上']
         lasttime_qwds = ['周期', '多久', '多长时间', '多少时间', '几天', '几年', '多少天', '多少小时', '几个小时', '多少年']
         check_qwds = ['检查', '检查项目', '查出', '检查', '测出', '试出']
@@ -98,19 +34,31 @@ class Untils:
 
         return sql
 
-    ## 进行分词
-    def SplitWord(text):
-        jieba.load_userdict("dict/check.txt")
-        jieba.load_userdict("dict/deny.txt")
-        jieba.load_userdict("dict/department.txt")
-        jieba.load_userdict("dict/disease.txt")
-        jieba.load_userdict("dict/drug.txt")
-        jieba.load_userdict("dict/food.txt")
-        jieba.load_userdict("dict/producer.txt")
-        jieba.load_userdict("dict/symptom.txt")
-        res=jieba.cut(text)
-        return res
+    def SplitWords(texts):
+        res=dict()
+        text=HanLP.segment(texts)
+        print(text)
+        for t in text:
+            word=str(t.word)
+            nature=str(t.nature)
+            res[nature]=word
+        return  res
 
+    def PrintRes(res,isRight,symptom):
+        if(isRight):
+          print("该帖子不属于谣言~ ")
+        else:
+          print("该帖子属于谣言~  "+"原因是：在"+res[1]["m.name"]+"这种疾病中,不包含有 "+symptom+" 这种症状")
+
+        print(res[1]["m.name"]+"这种疾病，在通常情况下可能有以下症状：",end="")
+
+        i=0
+        for r in res:
+          if i==0:
+           print(r["n.name"],end="")
+          else:
+           print("、"+r["n.name"], end="")
+          i=1
 
 
 if __name__ == '__main__':
@@ -119,7 +67,10 @@ if __name__ == '__main__':
      #
      # ress = graph.run(sqls).data()
      # print(ress)
-     words = Untils.SplitWord("哮喘会引起结膜充血")
-     for word in words:
-        print(word)
+     # words = Untils.SplitWord("哮喘会引起结膜充血")
+     # for word in words:
+     #    print(word)
+     text = "哮喘的症状有睡眠呼吸暂停"
+     res=Untils.SplitWords(text)
+
 
